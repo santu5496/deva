@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Leprosy Detection{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Welcome, {{ current_user.username }}</h1>
+    
+    <!-- Quick Stats -->
+    <div class="row mb-5">
+        <div class="col-md-4 mb-3 mb-md-0">
+            <div class="card bg-dark h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-image fa-3x mb-3 text-primary"></i>
+                    <h3 class="card-title">{{ current_user.images|length }}</h3>
+                    <p class="card-text">Total Images Uploaded</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3 mb-md-0">
+            <div class="card bg-dark h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-calendar-alt fa-3x mb-3 text-primary"></i>
+                    {% set days_since = (now - current_user.created_at).days %}
+                    <h3 class="card-title">{{ days_since }}</h3>
+                    <p class="card-text">Days Since Registration</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card bg-dark h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-3x mb-3 text-primary"></i>
+                    {% if current_user.images %}
+                        {% set last_upload = current_user.images|sort(attribute='upload_date', reverse=True)|first %}
+                        <h3 class="card-title">{{ last_upload.upload_date.strftime('%d %b %Y') }}</h3>
+                    {% else %}
+                        <h3 class="card-title">No uploads yet</h3>
+                    {% endif %}
+                    <p class="card-text">Last Upload Date</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Dashboard Actions -->
+    <div class="row mb-5">
+        <div class="col-md-6 mb-4 mb-md-0">
+            <div class="card bg-dark h-100">
+                <div class="card-body">
+                    <h2 class="card-title h4 mb-4"><i class="fas fa-upload me-2"></i> Upload New Image</h2>
+                    <p>Upload a skin image for leprosy detection analysis. Our AI system will analyze the image and provide results with detailed visualization.</p>
+                    <div class="mt-4 text-center">
+                        <a href="{{ url_for('upload') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-upload me-2"></i> Upload Image
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card bg-dark h-100">
+                <div class="card-body">
+                    <h2 class="card-title h4 mb-4"><i class="fas fa-history me-2"></i> View History</h2>
+                    <p>Access your past analysis results. Review previous uploads, detection results, and visualizations to track changes over time.</p>
+                    <div class="mt-4 text-center">
+                        <a href="{{ url_for('history') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-history me-2"></i> View History
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <h2 class="h4 mb-4"><i class="fas fa-chart-line me-2"></i> Recent Activity</h2>
+    
+    <div class="card bg-dark">
+        <div class="card-body p-0">
+            {% set user_images = current_user.images|sort(attribute='upload_date', reverse=True) %}
+            {% set recent_images = user_images[:5] if user_images|length > 5 else user_images %}
+            
+            {% if user_images %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Image</th>
+                                <th>Date</th>
+                                <th>Result</th>
+                                <th>Confidence</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for image in recent_images %}
+                                <tr>
+                                    <td>
+                                        <img src="{{ url_for('static', filename='uploads/' + image.filename) }}" alt="Skin Image" class="img-thumbnail" style="width: 60px; height: 60px; object-fit: cover;">
+                                    </td>
+                                    <td>{{ image.upload_date.strftime('%d %b %Y, %H:%M') }}</td>
+                                    <td>
+                                        {% if image.result %}
+                                            {% if image.result.prediction %}
+                                                <span class="badge bg-danger">Positive</span>
+                                            {% else %}
+                                                <span class="badge bg-success">Negative</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-secondary">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if image.result %}
+                                            {% set confidence = image.result.confidence * 100 %}
+                                            {{ confidence|round(2) }}%
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if image.result %}
+                                            <a href="{{ url_for('result', result_id=image.result.id) }}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-eye me-1"></i> View
+                                            </a>
+                                        {% else %}
+                                            <button class="btn btn-sm btn-secondary" disabled>
+                                                <i class="fas fa-hourglass-half me-1"></i> Processing
+                                            </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                {% if current_user.images|length > 5 %}
+                    <div class="p-3 text-center">
+                        <a href="{{ url_for('history') }}" class="btn btn-outline-light">
+                            <i class="fas fa-list me-2"></i> View All History
+                        </a>
+                    </div>
+                {% endif %}
+                
+            {% else %}
+                <div class="text-center p-5">
+                    <i class="fas fa-upload fa-3x mb-3 text-secondary"></i>
+                    <h3 class="h5">No Images Uploaded Yet</h3>
+                    <p class="text-muted mb-4">Upload your first skin image for analysis</p>
+                    <a href="{{ url_for('upload') }}" class="btn btn-primary">
+                        <i class="fas fa-upload me-2"></i> Upload Image
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

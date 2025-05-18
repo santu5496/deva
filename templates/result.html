@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}Analysis Result - Leprosy Detection{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="mb-0">Analysis Result</h1>
+                <a href="{{ url_for('upload') }}" class="btn btn-primary">
+                    <i class="fas fa-upload me-2"></i> Upload New Image
+                </a>
+            </div>
+
+            <!-- Result Card -->
+            <div class="card mb-4 {% if result.prediction %}result-positive{% else %}result-negative{% endif %}">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            {% if result.prediction %}
+                            <i class="fas fa-exclamation-triangle text-danger me-2"></i> Leprosy Detected
+                            {% else %}
+                            <i class="fas fa-check-circle text-success me-2"></i> No Leprosy Detected
+                            {% endif %}
+                        </h5>
+                        <span class="badge {% if result.prediction %}bg-danger{% else %}bg-success{% endif %}">
+                            {{ (result.confidence * 100)|round(2) }}% Confidence
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <h6 class="mb-3">Original Image</h6>
+                            <img src="{{ url_for('static', filename='uploads/' + image.filename) }}" alt="Original Image" class="img-fluid rounded">
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Grad-CAM Visualization</h6>
+                            {% if result.gradcam_path %}
+                            <img src="{{ url_for('static', filename=result.gradcam_path.replace('static/', '')) }}" alt="Grad-CAM Visualization" class="img-fluid rounded">
+                            {% else %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-circle me-2"></i> Visualization not available
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <h5 class="mb-3">Confidence Level</h5>
+                    <div class="progress mb-3" style="height: 25px;">
+                        <div class="progress-bar confidence-meter-fill {% if result.prediction %}bg-danger{% else %}bg-success{% endif %}" 
+                             role="progressbar" 
+                             style="width: 0%;" 
+                             data-confidence="{{ result.confidence }}"
+                             aria-valuenow="{{ (result.confidence * 100)|round }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100"
+                             title="Confidence level: {{ (result.confidence * 100)|round }}%"
+                             aria-label="Confidence level: {{ (result.confidence * 100)|round }}%">
+                            {{ (result.confidence * 100)|round }}%
+                        </div>
+                    </div>
+
+                    <h5 class="mb-3">Analysis Explanation</h5>
+                    <div class="card bg-dark mb-4">
+                        <div class="card-body">
+                            {% if result.prediction %}
+                                <p>The AI system has detected patterns consistent with leprosy in the uploaded image with {{ (result.confidence * 100)|round(2) }}% confidence.</p>
+                                <p>The highlighted areas in the Grad-CAM visualization show regions that most strongly influenced this prediction. These areas may exhibit characteristics such as:</p>
+                                <ul>
+                                    <li>Skin patches with abnormal coloration</li>
+                                    <li>Areas with reduced sensation</li>
+                                    <li>Textural changes in the skin</li>
+                                    <li>Possible nodular formations</li>
+                                </ul>
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i> <strong>Important:</strong> This is an AI-generated result and should not be considered a medical diagnosis. Please consult a healthcare professional for proper evaluation and diagnosis.
+                                </div>
+                            {% else %}
+                                <p>The AI system did not detect patterns consistent with leprosy in the uploaded image. The confidence in this negative result is {{ (result.confidence * 100)|round(2) }}%.</p>
+                                <p>The Grad-CAM visualization may still highlight areas that were analyzed during the detection process, but these areas did not exhibit characteristics typically associated with leprosy.</p>
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i> <strong>Note:</strong> If you have concerns about your skin health, it is still recommended to consult a healthcare professional, regardless of this negative result.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if result.prediction and result.confidence > 0.7 and doctors %}
+                        <h5 class="mb-3">Recommended Doctors</h5>
+                        <div class="alert alert-primary mb-3">
+                            <i class="fas fa-user-md me-2"></i> Based on the detection result, we recommend consulting one of these specialists.
+                        </div>
+                        <div class="row">
+                            {% for doctor in doctors[:3] %}
+                                <div class="col-md-4 mb-3">
+                                    <div class="card doctor-card h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ doctor.name }}</h5>
+                                            <h6 class="card-subtitle mb-2 text-muted">{{ doctor.specialization }}</h6>
+                                            <p class="card-text">
+                                                <i class="fas fa-phone me-2"></i> {{ doctor.contact }}<br>
+                                                <i class="fas fa-map-marker-alt me-2"></i> {{ doctor.address }}, {{ doctor.city }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {% if doctors|length > 3 %}
+                            <div class="text-center mt-3">
+                                <a href="{{ url_for('doctors') }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-list me-2"></i> View All Doctors
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+
+                    <div class="d-flex justify-content-between mt-4">
+                        {% if is_sample is defined and is_sample %}
+                            <a href="{{ url_for('samples') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i> Back to Samples
+                            </a>
+                            <a href="{{ url_for('upload') }}" class="btn btn-primary">
+                                <i class="fas fa-upload me-2"></i> Upload New Image
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
+                            </a>
+                            <a href="{{ url_for('history') }}" class="btn btn-primary">
+                                <i class="fas fa-history me-2"></i> View History
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer text-muted">
+                    <small>Analysis performed on {{ result.timestamp.strftime('%d %b %Y, %H:%M:%S') }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animate confidence meter
+        const confidenceMeter = document.querySelector('.confidence-meter-fill');
+        const confidence = parseFloat(confidenceMeter.dataset.confidence);
+        
+        setTimeout(function() {
+            confidenceMeter.style.width = `${confidence * 100}%`;
+        }, 300);
+    });
+</script>
+{% endblock %}
+
+{% endblock %}

@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+
+{% block title %}Test Samples - Leprosy Detection{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="mb-0">Test Sample Images</h1>
+                <a href="{{ url_for('upload') }}" class="btn btn-primary">
+                    <i class="fas fa-upload me-2"></i> Upload Your Own Image
+                </a>
+            </div>
+            
+            <div class="card">
+                <div class="card-body">
+                    <p class="lead">
+                        These sample images are provided for testing the leprosy detection system. Click on any image to process it with our AI model.
+                    </p>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> <strong>Note:</strong> These are test samples for demonstration purposes. For medical advice, always consult a healthcare professional.
+                    </div>
+                    
+                    <ul class="nav nav-tabs mb-4" id="sampleTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="positive-tab" data-bs-toggle="tab" data-bs-target="#positive" type="button" role="tab" aria-controls="positive" aria-selected="true">
+                                <i class="fas fa-exclamation-triangle me-2 text-danger"></i> Positive Samples
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="negative-tab" data-bs-toggle="tab" data-bs-target="#negative" type="button" role="tab" aria-controls="negative" aria-selected="false">
+                                <i class="fas fa-check-circle me-2 text-success"></i> Negative Samples
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="irrelevant-tab" data-bs-toggle="tab" data-bs-target="#irrelevant" type="button" role="tab" aria-controls="irrelevant" aria-selected="false">
+                                <i class="fas fa-question-circle me-2 text-warning"></i> Irrelevant Samples
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content" id="sampleTabsContent">
+                        <!-- Positive Samples -->
+                        <div class="tab-pane fade show active" id="positive" role="tabpanel" aria-labelledby="positive-tab">
+                            <h4 class="mb-3"><i class="fas fa-exclamation-triangle text-danger me-2"></i> Positive Samples</h4>
+                            <p>These images show cases with visible signs of leprosy. The model should detect these as positive.</p>
+                            
+                            <div class="row g-3">
+                                {% if positive_images %}
+                                    {% for img in positive_images %}
+                                    <div class="col-md-3">
+                                        <div class="card sample-card h-100">
+                                            <img src="{{ url_for('static', filename='samples/positive/' + img) }}" alt="Positive sample {{ loop.index }}" class="card-img-top">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Sample {{ loop.index }}</h5>
+                                                <a href="{{ url_for('upload_sample', category='positive', filename=img) }}" class="btn btn-primary btn-sm">
+                                                    <i class="fas fa-microscope me-1"></i> Analyze
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="col-12">
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-circle me-2"></i> No positive samples available.
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Negative Samples -->
+                        <div class="tab-pane fade" id="negative" role="tabpanel" aria-labelledby="negative-tab">
+                            <h4 class="mb-3"><i class="fas fa-check-circle text-success me-2"></i> Negative Samples</h4>
+                            <p>These images show normal skin or other non-leprosy conditions. The model should detect these as negative.</p>
+                            
+                            <div class="row g-3">
+                                {% if negative_images %}
+                                    {% for img in negative_images %}
+                                    <div class="col-md-3">
+                                        <div class="card sample-card h-100">
+                                            <img src="{{ url_for('static', filename='samples/negative/' + img) }}" alt="Negative sample {{ loop.index }}" class="card-img-top">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Sample {{ loop.index }}</h5>
+                                                <a href="{{ url_for('upload_sample', category='negative', filename=img) }}" class="btn btn-primary btn-sm">
+                                                    <i class="fas fa-microscope me-1"></i> Analyze
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="col-12">
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-circle me-2"></i> No negative samples available.
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Irrelevant Samples -->
+                        <div class="tab-pane fade" id="irrelevant" role="tabpanel" aria-labelledby="irrelevant-tab">
+                            <h4 class="mb-3"><i class="fas fa-question-circle text-warning me-2"></i> Irrelevant Samples</h4>
+                            <p>These images are not skin-related and should be detected as irrelevant or provide low confidence scores.</p>
+                            
+                            <div class="row g-3">
+                                {% if irrelevant_images %}
+                                    {% for img in irrelevant_images %}
+                                    <div class="col-md-3">
+                                        <div class="card sample-card h-100">
+                                            <img src="{{ url_for('static', filename='samples/irrelevant/' + img) }}" alt="Irrelevant sample {{ loop.index }}" class="card-img-top">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Sample {{ loop.index }}</h5>
+                                                <a href="{{ url_for('upload_sample', category='irrelevant', filename=img) }}" class="btn btn-primary btn-sm">
+                                                    <i class="fas fa-microscope me-1"></i> Analyze
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="col-12">
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-circle me-2"></i> No irrelevant samples available.
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize bootstrap tabs
+        var triggerTabList = [].slice.call(document.querySelectorAll('#sampleTabs button'))
+        triggerTabList.forEach(function (triggerEl) {
+            var tabTrigger = new bootstrap.Tab(triggerEl)
+            triggerEl.addEventListener('click', function (event) {
+                event.preventDefault()
+                tabTrigger.show()
+            })
+        })
+    });
+</script>
+{% endblock %}
+
+{% endblock %}

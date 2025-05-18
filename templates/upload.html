@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Image - Leprosy Detection{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h1 class="mb-4">Upload Skin Image</h1>
+            
+            <div class="card bg-dark mb-4">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-info-circle me-2 text-primary"></i>Guidelines for Image Upload</h5>
+                    <ul class="list-group list-group-flush bg-dark mb-0">
+                        <li class="list-group-item bg-dark">Upload a clear, well-lit image of the affected skin area</li>
+                        <li class="list-group-item bg-dark">Ensure the image is in focus and not blurry</li>
+                        <li class="list-group-item bg-dark">Images should be in JPG, JPEG, or PNG format</li>
+                        <li class="list-group-item bg-dark">For best results, capture the image in natural daylight</li>
+                        <li class="list-group-item bg-dark">Include some surrounding normal skin in the image for comparison</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="upload-container">
+                <form method="POST" action="{{ url_for('upload') }}" enctype="multipart/form-data">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-4">
+                        <label for="image" class="form-label">{{ form.image.label }}</label>
+                        <div class="input-group">
+                            {{ form.image(class="form-control", id="image", onchange="document.getElementById('imagePreview').style.display = 'block'") }}
+                            <label class="input-group-text" for="image">
+                                <i class="fas fa-file-image"></i>
+                            </label>
+                        </div>
+                        {% if form.image.errors %}
+                            <div class="text-danger mt-2">
+                                {% for error in form.image.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <small class="text-muted mt-2">Supported formats: JPG, JPEG, PNG</small>
+                    </div>
+                    
+                    <div class="mb-4 text-center">
+                        <img id="imagePreview" class="image-preview" alt="Image Preview">
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        {{ form.submit(class="btn btn-primary btn-lg") }}
+                    </div>
+                </form>
+            </div>
+            
+            <div class="card bg-dark mt-4">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-question-circle me-2 text-primary"></i>What happens next?</h5>
+                    <ol class="mb-0">
+                        <li>Our AI system will analyze your image for signs of leprosy</li>
+                        <li>The system will generate a visualization highlighting suspicious areas</li>
+                        <li>You'll receive a detailed result with confidence score</li>
+                        <li>If leprosy is detected with high confidence, doctor recommendations will be provided</li>
+                        <li>All results are stored in your account history for future reference</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const fileInput = document.getElementById('image');
+        const imagePreview = document.getElementById('imagePreview');
+        
+        fileInput.addEventListener('change', function() {
+            const file = this.files[0];
+            
+            if (file) {
+                const reader = new FileReader();
+                
+                reader.addEventListener('load', function() {
+                    imagePreview.setAttribute('src', this.result);
+                    imagePreview.style.display = 'block';
+                });
+                
+                reader.readAsDataURL(file);
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+{% endblock %}

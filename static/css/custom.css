@@ -1,0 +1,121 @@
+/* Custom styles for Leprosy Detection Application */
+
+/* Global Styles */
+body {
+    padding-top: 56px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-content {
+    flex: 1;
+}
+
+.footer {
+    margin-top: auto;
+    padding: 20px 0;
+}
+
+/* Home Page */
+.hero-section {
+    padding: 4rem 0;
+    background-color: var(--bs-dark);
+    color: white;
+}
+
+.feature-box {
+    padding: 20px;
+    height: 100%;
+    transition: transform 0.3s ease;
+}
+
+.feature-box:hover {
+    transform: translateY(-5px);
+}
+
+.feature-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--bs-primary);
+}
+
+/* Upload Form */
+.upload-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 30px;
+    border-radius: 8px;
+    background-color: var(--bs-dark);
+}
+
+.image-preview {
+    width: 100%;
+    max-height: 300px;
+    margin-top: 20px;
+    border-radius: 4px;
+    display: none;
+    object-fit: contain;
+}
+
+/* Results Page */
+.result-container {
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.result-positive {
+    background-color: rgba(220, 53, 69, 0.2);
+    border: 1px solid rgba(220, 53, 69, 0.5);
+}
+
+.result-negative {
+    background-color: rgba(25, 135, 84, 0.2);
+    border: 1px solid rgba(25, 135, 84, 0.5);
+}
+
+.confidence-meter {
+    height: 10px;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+
+/* Doctor Suggestions */
+.doctor-card {
+    transition: transform 0.3s ease;
+}
+
+.doctor-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Login & Registration */
+.auth-container {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 30px;
+    border-radius: 8px;
+    background-color: var(--bs-dark);
+}
+
+/* History Page */
+.history-item {
+    transition: transform 0.2s ease;
+}
+
+.history-item:hover {
+    transform: translateX(5px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 2rem 0;
+    }
+    
+    .upload-container, 
+    .auth-container {
+        padding: 15px;
+    }
+}

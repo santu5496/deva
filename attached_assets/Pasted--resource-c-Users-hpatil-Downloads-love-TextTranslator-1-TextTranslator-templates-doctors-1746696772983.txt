@@ -1,0 +1,118 @@
+[{
+	"resource": "/c:/Users/hpatil/Downloads/love/TextTranslator (1)/TextTranslator/templates/doctors.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "disown-opener",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-disown-opener/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 8,
+	"message": "Link 'rel' attribute should include 'noopener'.",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 60,
+	"startColumn": 34,
+	"endLineNumber": 60,
+	"endColumn": 35
+},{
+	"resource": "/c:/Users/hpatil/Downloads/love/TextTranslator (1)/TextTranslator/templates/base.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "axe/structure",
+		"target": {
+			"$mid": 1,
+			"path": "/rules/axe/4.10/list",
+			"scheme": "https",
+			"authority": "dequeuniversity.com",
+			"query": "application=axeAPI"
+		}
+	},
+	"severity": 4,
+	"message": "<ul> and <ol> must only directly contain <li>, <script> or <template> elements: List element has direct children that are not allowed: #text",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 117,
+	"startColumn": 22,
+	"endLineNumber": 117,
+	"endColumn": 24
+},{
+	"resource": "/c:/Users/hpatil/Downloads/love/TextTranslator (1)/TextTranslator/templates/base.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "axe/structure",
+		"target": {
+			"$mid": 1,
+			"path": "/rules/axe/4.10/list",
+			"scheme": "https",
+			"authority": "dequeuniversity.com",
+			"query": "application=axeAPI"
+		}
+	},
+	"severity": 4,
+	"message": "<ul> and <ol> must only directly contain <li>, <script> or <template> elements: List element has direct children that are not allowed: #text",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 61,
+	"startColumn": 18,
+	"endLineNumber": 61,
+	"endColumn": 20
+},{
+	"resource": "/c:/Users/hpatil/Downloads/love/TextTranslator (1)/TextTranslator/templates/base.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "axe/structure",
+		"target": {
+			"$mid": 1,
+			"path": "/rules/axe/4.10/list",
+			"scheme": "https",
+			"authority": "dequeuniversity.com",
+			"query": "application=axeAPI"
+		}
+	},
+	"severity": 4,
+	"message": "<ul> and <ol> must only directly contain <li>, <script> or <template> elements: List element has direct children that are not allowed: #text",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 27,
+	"startColumn": 18,
+	"endLineNumber": 27,
+	"endColumn": 20
+},{
+	"resource": "/c:/Users/hpatil/Downloads/love/TextTranslator (1)/TextTranslator/templates/base.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "disown-opener",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-disown-opener/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 8,
+	"message": "Link 'rel' attribute should include 'noopener'.",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 132,
+	"startColumn": 30,
+	"endLineNumber": 132,
+	"endColumn": 31
+},{
+	"resource": "/c:/Users/hpatil/Downloads/love/TextTranslator (1)/TextTranslator/templates/base.html",
+	"owner": "_generated_diagnostic_collection_name_#0",
+	"code": {
+		"value": "disown-opener",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/user-guide/hints/hint-disown-opener/",
+			"scheme": "https",
+			"authority": "webhint.io"
+		}
+	},
+	"severity": 8,
+	"message": "Link 'rel' attribute should include 'noopener'.",
+	"source": "Microsoft Edge Tools",
+	"startLineNumber": 131,
+	"startColumn": 30,
+	"endLineNumber": 131,
+	"endColumn": 31
+}]

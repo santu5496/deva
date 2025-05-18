@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% block title %}History - Leprosy Detection{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Your Analysis History</h1>
+    
+    <div class="card bg-dark mb-4">
+        <div class="card-body">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-history fa-2x text-primary me-3"></i>
+                <div>
+                    <h5 class="mb-1">Analysis Records</h5>
+                    <p class="mb-0">Here you can view all your past image analyses and their results</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if results %}
+        <!-- Results List -->
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Image</th>
+                        <th>Date</th>
+                        <th>Result</th>
+                        <th>Confidence</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                        <tr class="history-item">
+                            <td>
+                                <img src="{{ url_for('static', filename='uploads/' + images[result.image_id].filename) }}" alt="Skin Image" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover;">
+                            </td>
+                            <td>{{ result.timestamp.strftime('%d %b %Y, %H:%M') }}</td>
+                            <td>
+                                {% if result.prediction %}
+                                    <span class="badge bg-danger">Positive</span>
+                                {% else %}
+                                    <span class="badge bg-success">Negative</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar {% if result.prediction %}bg-danger{% else %}bg-success{% endif %}" 
+                                         role="progressbar" 
+                                         style="width: {{ (result.confidence * 100)|round }}%;" 
+                                         aria-valuenow="{{ (result.confidence * 100)|round }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100"
+                                         title="Confidence level: {{ (result.confidence * 100)|round }}%"
+                                         aria-label="Confidence level: {{ (result.confidence * 100)|round }}%">
+                                    </div>
+                                </div>
+                                <small>{{ (result.confidence * 100)|round(2) }}%</small>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('result', result_id=result.id) }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-eye me-1"></i> View Details
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <!-- No Results -->
+        <div class="text-center py-5">
+            <i class="fas fa-search fa-4x text-secondary mb-3"></i>
+            <h3>No Analysis History Found</h3>
+            <p class="text-muted">You haven't uploaded any images for analysis yet.</p>
+            <a href="{{ url_for('upload') }}" class="btn btn-primary mt-3">
+                <i class="fas fa-upload me-2"></i> Upload Image
+            </a>
+        </div>
+    {% endif %}
+    
+    <!-- Summary Chart (if there are results) -->
+    {% if results %}
+        <div class="card bg-dark mt-4">
+            <div class="card-body">
+                <h5 class="mb-3">Analysis Summary</h5>
+                <canvas id="resultsSummaryChart" height="100"></canvas>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+{% block extra_js %}
+{% if results %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Calculate positive and negative counts
+        const results = {{ results|tojson }};
+        let positiveCount = 0;
+        let negativeCount = 0;
+        
+        results.forEach(result => {
+            if (result.prediction) {
+                positiveCount++;
+            } else {
+                negativeCount++;
+            }
+        });
+        
+        // Create chart
+        const ctx = document.getElementById('resultsSummaryChart').getContext('2d');
+        const resultsSummaryChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Positive', 'Negative'],
+                datasets: [{
+                    data: [positiveCount, negativeCount],
+                    backgroundColor: [
+                        'rgba(220, 53, 69, 0.7)',
+                        'rgba(25, 135, 84, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(220, 53, 69, 1)',
+                        'rgba(25, 135, 84, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: '#fff'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Analysis Results Distribution',
+                        color: '#fff',
+                        font: {
+                            size: 16
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((acc, val) => acc + val, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endif %}
+{% endblock %}
+
+{% endblock %}

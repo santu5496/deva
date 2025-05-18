@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Recommended Doctors - Leprosy Detection{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Recommended Doctors</h1>
+    
+    <div class="card bg-dark mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <h5 class="mb-3"><i class="fas fa-user-md text-primary me-2"></i>Specialist Directory</h5>
+                    <p>Below is a list of healthcare professionals who specialize in the diagnosis and treatment of leprosy (Hansen's disease) and other skin conditions. These doctors have experience in managing leprosy cases and can provide appropriate medical care.</p>
+                </div>
+                <div class="col-md-4 d-flex align-items-center justify-content-center">
+                    <div class="text-center">
+                        <i class="fas fa-stethoscope fa-4x text-primary mb-2"></i>
+                        <p class="mb-0">Finding the right specialist is crucial for effective treatment</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Location Map -->
+    <div class="card bg-dark mb-4">
+        <div class="card-body">
+            <h5 class="mb-3">Doctor Locations</h5>
+            <div id="doctorMap" style="height: 400px;" data-doctors="{{ doctors|tojson }}"></div>
+            <div class="text-center mt-3">
+                <small class="text-muted">Map shows locations relative to your current position (if available)</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Doctor List -->
+    <div class="row">
+        {% if doctors %}
+            {% for doctor in doctors %}
+                <div class="col-md-4 mb-4">
+                    <div class="card doctor-card h-100">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">{{ doctor.name }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-3 text-muted">{{ doctor.specialization }}</h6>
+                            
+                            <p class="mb-2">
+                                <i class="fas fa-phone-alt me-2 text-primary"></i> {{ doctor.contact }}
+                            </p>
+                            <p class="mb-2">
+                                <i class="fas fa-map-marker-alt me-2 text-primary"></i> {{ doctor.address }}
+                            </p>
+                            <p class="mb-3">
+                                <i class="fas fa-city me-2 text-primary"></i> {{ doctor.city }}, {{ doctor.state }}, {{ doctor.country }}
+                            </p>
+                            
+                            <div class="d-grid gap-2">
+                                <a href="https://www.google.com/maps/search/?api=1&query={{ doctor.latitude }},{{ doctor.longitude }}" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener noreferrer">
+                                    <i class="fas fa-directions me-2"></i> Get Directions
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> No doctor information available at this time.
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% block extra_js %}
+<!-- Google Maps API (with a placeholder API key - would be replaced with actual key in production) -->
+<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap" async defer></script>
+<script>
+    // This function will be called when the Google Maps API is loaded
+    function initMap() {
+        // The map initialization is handled in main.js
+    }
+</script>
+{% endblock %}
+
+{% endblock %}

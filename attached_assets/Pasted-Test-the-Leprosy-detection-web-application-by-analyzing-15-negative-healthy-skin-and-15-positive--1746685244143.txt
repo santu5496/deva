@@ -1,0 +1,86 @@
+Test the Leprosy detection web application by analyzing 15 negative (healthy skin) and 15 positive (Leprosy-affected skin) images. The goal is to evaluate the performance of the trained model, validate the predictions, visualize the results using Explainable AI (XAI), and store the results in the database.
+
+Steps:
+Prepare the Images:
+
+Collect 15 negative (healthy skin) images and 15 positive (Leprosy-affected skin) images. These images will be used for testing the accuracy of the model's predictions.
+
+Ensure that the images are similar in quality, size, and resolution to those the model will encounter during real-world usage.
+
+Upload the Images:
+
+Allow users to upload the 30 images (15 healthy and 15 affected) via the Flask web application’s image upload feature.
+
+Run the Predictions:
+
+After the images are uploaded, the model should classify each image as either Leprosy-affected or Healthy skin.
+
+Ensure that the application provides a confidence score for each prediction.
+
+Visualize the Results using XAI:
+
+Apply Grad-CAM or other Explainable AI techniques to highlight the areas in the images where the model has detected Leprosy, providing a heatmap of the affected regions.
+
+For healthy images, confirm that the model does not focus on any abnormal regions.
+
+Store Results in the Database:
+
+Store the following details for each image in the SQLite database:
+
+Image file name
+
+Prediction result (Healthy or Leprosy)
+
+Confidence score
+
+XAI visualization (heatmap, if applicable)
+
+Any doctor recommendations (if Leprosy is detected)
+
+Evaluate the Results:
+
+For the Negative (Healthy) Images:
+
+Ensure that all healthy images are correctly classified as healthy with high confidence scores (e.g., 95% or above).
+
+Check that the XAI output does not highlight any abnormal skin regions.
+
+For the Positive (Leprosy) Images:
+
+Ensure that all Leprosy images are correctly classified as Leprosy with high confidence scores (e.g., 90% or above).
+
+Verify that the XAI highlights the areas where Leprosy lesions are present.
+
+Doctor Recommendations:
+
+If Leprosy is detected with a high confidence score (e.g., 90% or above), ensure that the system recommends nearby doctors for treatment.
+
+Confirm that the recommendation functionality works and provides accurate doctor suggestions.
+
+Expected Results:
+Negative Images (Healthy Skin):
+
+All negative images should be classified as healthy with a confidence of 95% or higher.
+
+The XAI visualization should not show any abnormal skin regions.
+
+Positive Images (Leprosy-Affected Skin):
+
+All positive images should be classified as Leprosy with a confidence of 90% or higher.
+
+The XAI visualization should highlight the areas where Leprosy lesions are present.
+
+Database Results:
+
+The prediction results (healthy or Leprosy), confidence scores, and XAI visualizations should be stored in the SQLite database.
+
+Doctor Recommendations:
+
+For each positive image, if Leprosy is detected with high confidence, the application should recommend nearby doctors for consultation.
+
+Test Conclusion:
+Analyze how well the model performs on the provided dataset and ensure it handles both healthy and affected images correctly.
+
+The XAI visualizations should help understand how the model makes its predictions.
+
+Verify the database is correctly storing all results, and the doctor recommendation feature functions as intended.

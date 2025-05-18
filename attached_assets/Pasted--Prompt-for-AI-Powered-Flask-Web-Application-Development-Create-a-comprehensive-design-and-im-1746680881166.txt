@@ -1,0 +1,61 @@
+**Prompt for AI-Powered Flask Web Application Development:**
+
+Create a comprehensive design and implementation plan for an AI-powered Flask web application focused on Leprosy detection using Explainable AI (XAI) techniques. The application must incorporate the following features:
+
+1. **Login & Registration System:**
+   - Implement user registration and login functionality using email, username, and password.
+   - Utilize SQLite as the database for storing authentication data.
+   - Ensure secure authentication through password hashing and validation.
+   - Exclude additional user features beyond basic login and registration.
+
+2. **Image Upload and Leprosy Detection:**
+   - Develop an interface for users to upload skin images for analysis, with the capability to classify images as positive or negative for Leprosy.
+   - Integrate a pre-trained deep learning model that accurately detects Leprosy from the uploaded images.
+   - Ensure the model can differentiate between skin and non-skin images.
+
+3. **Model Training:**
+   - Use a deep learning model to train on real datasets sourced from Kaggle, requiring provision of Kaggle API credentials.
+   - Save the trained model in .h5 format for future use.
+
+4. **Explainable AI (XAI) Techniques:**
+   - Implement XAI techniques to visualize the detection results, highlighting affected areas of the skin images using methods like Grad-CAM or heatmaps.
+   - Display a clear explanation of the prediction alongside the uploaded image.
+
+5. **Doctor Suggestion:**
+   - If Leprosy is detected with high confidence, provide a suggestion of nearby doctors, utilizing either a predefined list or an API (e.g., Google Maps API).
+   - Include essential doctor details such as name, contact information, and location based on user’s geographical data.
+
+6. **Database & Record Keeping:**
+   - Design the SQLite database schema to store user data, uploaded images, prediction outcomes, and doctor suggestions.
+   - Implement automatic tracking of user tests and results within the database.
+
+7. **Dynamic Data & API Integration:**
+   - Ensure the application utilizes real dynamic data for both training and predictions, avoiding any dummy data.
+   - Use the Kaggle API key to download datasets necessary for model training, ensuring a diverse set of both positive and negative Leprosy images.
+
+8. **Virtual Environment & Setup:**
+   - Ensure compatibility with VS Code for seamless operation.
+   - Provide a `requirements.txt` file listing all dependencies (e.g., Flask, TensorFlow, SQLite, Kaggle).
+   - Include detailed instructions for setting up the Python virtual environment and installing dependencies using pip.
+
+9. **GitHub Integration:**
+   - Push the complete application code to a GitHub repository.
+   - Draft clear setup instructions in a README.md file, detailing how to install dependencies, set up the virtual environment, and run the application.
+
+10. **File Structure:**
+    - Organize the project into the following directory structure:
+      ```
+      /static          # for static files (images, styles)
+      /templates       # for HTML templates
+      /dataset         # for storing datasets
+      /model           # for saving the trained model and related files
+      ```
+
+11. **Running the App:**
+    - Ensure that after cloning the repository, users can open the project in VS Code, activate the virtual environment, install necessary dependencies, and run the application without encountering errors.
+
+12. **Additional Notes:**
+    - Guarantee proper table creation and migrations in the SQLite database for all required data structures.
+    - Store the trained Leprosy detection model as a .h5 file within the designated model directory.
+    - Activate the doctor suggestion feature only when Leprosy is detected with high confidence, ensuring location-based data is employed for displaying doctor information.
+    - Maintain the integrity of training and testing procedures by exclusively using real Kaggle datasets.
