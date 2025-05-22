@@ -33,16 +33,26 @@
                     <div class="row mb-4">
                         <div class="col-md-6 mb-3 mb-md-0">
                             <h6 class="mb-3">Original Image</h6>
-                            <img src="{{ url_for('static', filename='uploads/' + image.filename) }}" alt="Original Image" class="img-fluid rounded">
+                            <!-- Use the custom route that handles file serving -->
+                            {% if image.path %}
+                                <img src="{{ url_for('serve_uploaded_file', filename=image.path) }}" alt="Original Image" class="img-fluid rounded" onerror="this.parentElement.innerHTML='<div class=&quot;alert alert-warning&quot;><i class=&quot;fas fa-exclamation-circle me-2&quot;></i>Original image not available</div>'">
+                            {% elif image.filename %}
+                                <img src="{{ url_for('serve_uploaded_file', filename=image.filename) }}" alt="Original Image" class="img-fluid rounded" onerror="this.parentElement.innerHTML='<div class=&quot;alert alert-warning&quot;><i class=&quot;fas fa-exclamation-circle me-2&quot;></i>Original image not available</div>'">
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-circle me-2"></i> Image not available
+                                </div>
+                            {% endif %}
                         </div>
                         <div class="col-md-6">
                             <h6 class="mb-3">Grad-CAM Visualization</h6>
+                            <!-- Use the custom route that handles file serving -->
                             {% if result.gradcam_path %}
-                            <img src="{{ url_for('static', filename=result.gradcam_path.replace('static/', '')) }}" alt="Grad-CAM Visualization" class="img-fluid rounded">
+                                <img src="{{ url_for('serve_uploaded_file', filename=result.gradcam_path) }}" alt="Grad-CAM Visualization" class="img-fluid rounded" onerror="this.parentElement.innerHTML='<div class=&quot;alert alert-warning&quot;><i class=&quot;fas fa-exclamation-circle me-2&quot;></i>Visualization not available</div>'">
                             {% else %}
-                            <div class="alert alert-warning">
-                                <i class="fas fa-exclamation-circle me-2"></i> Visualization not available
-                            </div>
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-circle me-2"></i> Visualization not available
+                                </div>
                             {% endif %}
                         </div>
                     </div>
@@ -122,39 +132,111 @@
                             <a href="{{ url_for('samples') }}" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left me-2"></i> Back to Samples
                             </a>
-                            <a href="{{ url_for('upload') }}" class="btn btn-primary">
-                                <i class="fas fa-upload me-2"></i> Upload New Image
-                            </a>
                         {% else %}
-                            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
-                            </a>
-                            <a href="{{ url_for('history') }}" class="btn btn-primary">
+                            <a href="{{ url_for('history') }}" class="btn btn-secondary">
                                 <i class="fas fa-history me-2"></i> View History
                             </a>
                         {% endif %}
+                        
+                        <div>
+                            {% if result.timestamp %}
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>
+                                    Analyzed on {{ result.timestamp.strftime('%B %d, %Y at %I:%M %p') if result.timestamp is not string else result.timestamp }}
+                                </small>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
-                <div class="card-footer text-muted">
-                    <small>Analysis performed on {{ result.timestamp.strftime('%d %b %Y, %H:%M:%S') }}</small>
+            </div>
+
+            <!-- Additional Information Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i> About This Analysis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>How It Works</h6>
+                            <p class="small">Our AI system uses deep learning algorithms trained on thousands of medical images to identify patterns associated with leprosy. The Grad-CAM visualization highlights the areas that most influenced the AI's decision.</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Disclaimer</h6>
+                            <p class="small text-warning">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                This tool is for educational and screening purposes only. It is not a substitute for professional medical diagnosis. Always consult qualified healthcare professionals for accurate diagnosis and treatment.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-{% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Animate confidence meter
-        const confidenceMeter = document.querySelector('.confidence-meter-fill');
-        const confidence = parseFloat(confidenceMeter.dataset.confidence);
-        
-        setTimeout(function() {
-            confidenceMeter.style.width = `${confidence * 100}%`;
-        }, 300);
-    });
-</script>
-{% endblock %}
+<style>
+.result-positive {
+    border-left: 5px solid #dc3545;
+}
 
+.result-negative {
+    border-left: 5px solid #28a745;
+}
+
+.doctor-card {
+    transition: transform 0.2s;
+}
+
+.doctor-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.confidence-meter-fill {
+    transition: width 1s ease-in-out;
+}
+
+.card.bg-dark {
+    background-color: #343a40 !important;
+    color: white;
+}
+
+.card.bg-dark .card-body {
+    color: #f8f9fa;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate confidence meter
+    const confidenceBars = document.querySelectorAll('.confidence-meter-fill');
+    confidenceBars.forEach(bar => {
+        const confidence = parseFloat(bar.dataset.confidence);
+        const percentage = Math.round(confidence * 100);
+        setTimeout(() => {
+            bar.style.width = percentage + '%';
+        }, 500);
+    });
+    
+    // Debug image loading
+    const images = document.querySelectorAll('img');
+    images.forEach(img => {
+        img.addEventListener('load', function() {
+            console.log('Image loaded successfully:', this.src);
+        });
+        
+        img.addEventListener('error', function() {
+            console.error('Failed to load image:', this.src);
+            // Error handling is now done inline with onerror attribute
+        });
+    });
+    
+    // Debug: Log current page info
+    console.log('Result page loaded');
+    console.log('Current location:', window.location.href);
+});
+</script>
 {% endblock %}

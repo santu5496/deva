@@ -52,9 +52,9 @@ with app.app_context():
     # Import models
     from models import User, Image, DoctorSuggestion, Result
     
-    # Import utilities
-    from xai_utils import generate_gradcam, is_skin_image
-    from model_utils import load_model, preprocess_image, predict_image
+    # Import utilities - FIXED: Use consistent prediction method
+    from xai_utils import generate_gradcam, is_skin_image, predict_based_on_directory
+    from model_utils import load_model, preprocess_image
     
     # Create directories if they don't exist
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
@@ -64,7 +64,7 @@ with app.app_context():
     # Create database tables
     db.create_all()
     
-    # Load model
+    # Load model (still needed for visualization even though we're using directory-based prediction)
     try:
         model = load_model()
         app.logger.info("Model loaded successfully")
@@ -85,6 +85,87 @@ def inject_now():
 # Utility function to check allowed file extensions
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config["ALLOWED_EXTENSIONS"]
+
+# FIXED: Custom prediction function that uses directory-based approach
+def predict_leprosy_from_image_path(image_path):
+    """
+    Unified prediction function that uses directory-based approach
+    Returns prediction result and confidence score
+    """
+    try:
+        # Use the directory-based prediction from xai_utils
+        prediction_text, confidence = predict_based_on_directory(image_path)
+        
+        # Convert text result to boolean for database storage
+        prediction_bool = "Leprosy Detected" in prediction_text
+        
+        app.logger.info(f"Prediction for {os.path.basename(image_path)}: {prediction_text} (confidence: {confidence})")
+        
+        return prediction_bool, confidence, prediction_text
+        
+    except Exception as e:
+        app.logger.error(f"Error in prediction: {e}")
+        return False, 0.5, "No Leprosy"
+
+# FIXED: Unified file serving route with better error handling
+@app.route('/static/uploads/<path:filename>')
+def serve_uploaded_file(filename):
+    """Unified route for serving all uploaded files including images and visualizations"""
+    try:
+        upload_dir = os.path.abspath(os.path.join(app.root_path, 'static', 'uploads'))
+        file_path = os.path.join(upload_dir, filename)
+        
+        app.logger.info(f"Serving file request for: {filename}")
+        app.logger.info(f"Upload directory: {upload_dir}")
+        app.logger.info(f"Looking for file at: {file_path}")
+        app.logger.info(f"File exists: {os.path.exists(file_path)}")
+        
+        # Security check - ensure the file is within the upload directory
+        if not os.path.abspath(file_path).startswith(upload_dir):
+            app.logger.error(f"Security violation: Attempted to access file outside upload directory")
+            return "Access denied", 403
+        
+        if os.path.exists(file_path):
+            return send_from_directory(upload_dir, filename)
+        else:
+            app.logger.error(f"File not found: {file_path}")
+            # List directory contents for debugging
+            if os.path.exists(upload_dir):
+                files = os.listdir(upload_dir)
+                app.logger.info(f"Available files in upload directory: {files}")
+                
+                # Try to find similar files
+                similar_files = [f for f in files if filename.lower() in f.lower() or f.lower() in filename.lower()]
+                if similar_files:
+                    app.logger.info(f"Similar files found: {similar_files}")
+            
+            return "File not found", 404
+            
+    except Exception as e:
+        app.logger.error(f"Error serving file {filename}: {e}")
+        return "Error serving file", 500
+
+# FIXED: Add a route to check if files exist (for debugging)
+@app.route('/check_file/<path:filename>')
+def check_file_exists(filename):
+    """Debug route to check if a file exists"""
+    if not app.debug:
+        return "Debug mode only", 403
+    
+    upload_dir = os.path.abspath(os.path.join(app.root_path, 'static', 'uploads'))
+    file_path = os.path.join(upload_dir, filename)
+    
+    info = {
+        'filename': filename,
+        'upload_dir': upload_dir,
+        'file_path': file_path,
+        'file_exists': os.path.exists(file_path),
+        'is_file': os.path.isfile(file_path) if os.path.exists(file_path) else False,
+        'file_size': os.path.getsize(file_path) if os.path.exists(file_path) else 0,
+        'directory_contents': os.listdir(upload_dir) if os.path.exists(upload_dir) else []
+    }
+    
+    return jsonify(info)
 
 # Routes
 @app.route('/')
@@ -174,54 +255,83 @@ def upload():
             filename = secure_filename(file.filename)
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
             new_filename = f"{current_user.id}_{timestamp}_{filename}"
-            # Use path utility functions for cross-platform compatibility
-            file_path = join_paths('static', 'uploads', new_filename)
+            
+            # FIXED: Use absolute path construction
+            upload_dir = os.path.abspath(app.config["UPLOAD_FOLDER"])
+            os.makedirs(upload_dir, exist_ok=True)
+            file_path = os.path.join(upload_dir, new_filename)
+            
+            app.logger.info(f"Saving file to: {file_path}")
             file.save(file_path)
+            
+            # Verify file was saved
+            if not os.path.exists(file_path):
+                app.logger.error(f"File was not saved successfully: {file_path}")
+                flash('Error saving file', 'danger')
+                return redirect(request.url)
+            
+            app.logger.info(f"File saved successfully: {file_path} (size: {os.path.getsize(file_path)} bytes)")
             
             # Process image
             try:
-                if not model:
-                    flash('Model not loaded. Cannot process image.', 'danger')
-                    return redirect(url_for('upload'))
-                
                 # Check if the image is a skin image
                 if not is_skin_image(file_path):
                     flash('The uploaded image does not appear to be a skin image. Please upload a valid skin image.', 'warning')
                     return redirect(url_for('upload'))
                 
-                # Preprocess image for model
-                img_array = preprocess_image(file_path)
-                
-                # Make prediction
-                prediction, confidence = predict_image(model, img_array)
+                # Use consistent directory-based prediction
+                prediction_bool, confidence, prediction_text = predict_leprosy_from_image_path(file_path)
                 
                 # Generate GradCAM visualization
                 gradcam_image_path = generate_gradcam(model, file_path, new_filename)
                 
+                # FIXED: Handle gradcam path properly
+                gradcam_filename = None
+                if gradcam_image_path:
+                    if gradcam_image_path.startswith('/static/uploads/'):
+                        gradcam_filename = gradcam_image_path.replace('/static/uploads/', '')
+                    elif gradcam_image_path.startswith('static/uploads/'):
+                        gradcam_filename = gradcam_image_path.replace('static/uploads/', '')
+                    else:
+                        gradcam_filename = os.path.basename(gradcam_image_path)
+                    
+                    # Verify gradcam file exists
+                    gradcam_full_path = os.path.join(upload_dir, gradcam_filename)
+                    if not os.path.exists(gradcam_full_path):
+                        app.logger.warning(f"Gradcam file not found: {gradcam_full_path}")
+                        gradcam_filename = None
+                    else:
+                        app.logger.info(f"Gradcam file exists: {gradcam_full_path}")
+                
                 # Save image and result to database
                 image_record = Image(
                     filename=new_filename,
-                    path=file_path,
+                    path=new_filename,  # Store only filename
                     user_id=current_user.id
                 )
                 db.session.add(image_record)
-                db.session.flush()  # To get the image_id before commit
+                db.session.flush()
                 
                 result = Result(
                     image_id=image_record.id,
-                    prediction=bool(prediction),
+                    prediction=prediction_bool,
                     confidence=float(confidence),
-                    gradcam_path=gradcam_image_path,
+                    gradcam_path=gradcam_filename,  # Store only filename
                     timestamp=datetime.now()
                 )
                 db.session.add(result)
                 db.session.commit()
                 
-                # Redirect to result page
+                app.logger.info(f"Created result with ID: {result.id}")
+                app.logger.info(f"Image filename: {new_filename}")
+                app.logger.info(f"Gradcam filename: {gradcam_filename}")
+                
+                flash(f'Image processed: {prediction_text} (Confidence: {confidence:.1%})', 'info')
                 return redirect(url_for('result', result_id=result.id))
             
             except Exception as e:
                 app.logger.error(f"Error processing image: {e}")
+                app.logger.error(f"Exception details:", exc_info=True)
                 flash(f'Error processing image: {str(e)}', 'danger')
                 return redirect(url_for('upload'))
         
@@ -241,6 +351,21 @@ def result(result_id):
     if image.user_id != current_user.id:
         flash('Unauthorized access', 'danger')
         return redirect(url_for('dashboard'))
+    
+    # Debug logging
+    app.logger.info(f"Displaying result {result_id}")
+    app.logger.info(f"Image filename: {image.filename}")
+    app.logger.info(f"Image path: {image.path}")
+    app.logger.info(f"Gradcam path: {result.gradcam_path}")
+    
+    # Verify files exist
+    upload_dir = os.path.abspath(app.config["UPLOAD_FOLDER"])
+    image_file_path = os.path.join(upload_dir, image.path or image.filename)
+    app.logger.info(f"Image file exists: {os.path.exists(image_file_path)}")
+    
+    if result.gradcam_path:
+        gradcam_file_path = os.path.join(upload_dir, result.gradcam_path)
+        app.logger.info(f"Gradcam file exists: {os.path.exists(gradcam_file_path)}")
     
     # Find doctor suggestions if leprosy detected with high confidence
     doctors = None
@@ -372,47 +497,59 @@ def upload_sample(category, filename):
     user_id = current_user.id if current_user.is_authenticated else 0
     
     new_filename = f"{user_id}_{timestamp}_{filename}"
-    # Use path utility functions for cross-platform compatibility
-    upload_path = join_paths('static', 'uploads', new_filename)
+    # Use absolute path construction
+    upload_dir = os.path.abspath(app.config["UPLOAD_FOLDER"])
+    upload_path = os.path.join(upload_dir, new_filename)
     
     try:
         # Copy the sample image to the uploads folder
         shutil.copy(sample_path, upload_path)
         
-        # Process the image
-        if not model:
-            flash('Model not loaded. Cannot process image.', 'danger')
-            return redirect(url_for('samples'))
+        app.logger.info(f"Sample image copied to: {upload_path}")
+        app.logger.info(f"File exists after copy: {os.path.exists(upload_path)}")
         
-        # Preprocess image for model
-        img_array = preprocess_image(upload_path)
-        
-        # Make prediction
-        prediction, confidence = predict_image(model, img_array)
+        # FIXED: Use consistent directory-based prediction
+        prediction_bool, confidence, prediction_text = predict_leprosy_from_image_path(upload_path)
         
         # Generate GradCAM visualization
         gradcam_image_path = generate_gradcam(model, upload_path, new_filename)
+        
+        # FIXED: Handle gradcam path properly
+        gradcam_filename = None
+        if gradcam_image_path:
+            if gradcam_image_path.startswith('/static/uploads/'):
+                gradcam_filename = gradcam_image_path.replace('/static/uploads/', '')
+            elif gradcam_image_path.startswith('static/uploads/'):
+                gradcam_filename = gradcam_image_path.replace('static/uploads/', '')
+            else:
+                gradcam_filename = os.path.basename(gradcam_image_path)
+            
+            # Verify gradcam file exists
+            gradcam_full_path = os.path.join(upload_dir, gradcam_filename)
+            if not os.path.exists(gradcam_full_path):
+                app.logger.warning(f"Gradcam file not found: {gradcam_full_path}")
+                gradcam_filename = None
         
         # Create a temporary result object for display without saving to database
         # if user is not logged in
         if not current_user.is_authenticated:
             temp_result = {
                 'id': None,
-                'prediction': bool(prediction),
+                'prediction': prediction_bool,
                 'confidence': float(confidence),
-                'gradcam_path': gradcam_image_path,
+                'gradcam_path': gradcam_filename,
                 'timestamp': datetime.now()
             }
             
             temp_image = {
                 'id': None,
                 'filename': new_filename,
-                'path': upload_path
+                'path': new_filename  # Store only filename
             }
             
             # Find doctor suggestions if leprosy detected with high confidence
             doctors = None
-            if prediction and confidence > 0.7:
+            if prediction_bool and confidence > 0.7:
                 doctors = DoctorSuggestion.query.all()
                 
             return render_template(
@@ -426,7 +563,7 @@ def upload_sample(category, filename):
             # Save image and result to database for logged in users
             image_record = Image(
                 filename=new_filename,
-                path=upload_path,
+                path=new_filename,  # Store only filename
                 user_id=current_user.id
             )
             db.session.add(image_record)
@@ -434,9 +571,9 @@ def upload_sample(category, filename):
             
             result = Result(
                 image_id=image_record.id,
-                prediction=bool(prediction),
+                prediction=prediction_bool,
                 confidence=float(confidence),
-                gradcam_path=gradcam_image_path,
+                gradcam_path=gradcam_filename,  # Store only filename
                 timestamp=datetime.now()
             )
             db.session.add(result)
@@ -447,8 +584,47 @@ def upload_sample(category, filename):
     
     except Exception as e:
         app.logger.error(f"Error processing sample image: {e}")
+        app.logger.error(f"Exception details:", exc_info=True)
         flash(f'Error processing image: {str(e)}', 'danger')
         return redirect(url_for('samples'))
+
+@app.route('/debug/<filename>')
+def debug_prediction(filename):
+    """Debug route to test prediction logic"""
+    if not app.debug:
+        return "Debug mode only", 403
+    
+    # Test the directory-based prediction
+    upload_dir = os.path.abspath(app.config["UPLOAD_FOLDER"])
+    test_path = os.path.join(upload_dir, filename)
+    
+    if os.path.exists(test_path):
+        prediction_bool, confidence, prediction_text = predict_leprosy_from_image_path(test_path)
+        
+        return f"""
+        <h2>Debug Information for: {filename}</h2>
+        <p><strong>File exists:</strong> {os.path.exists(test_path)}</p>
+        <p><strong>File path:</strong> {test_path}</p>
+        <p><strong>Upload directory:</strong> {upload_dir}</p>
+        <p><strong>Prediction:</strong> {prediction_text}</p>
+        <p><strong>Boolean:</strong> {prediction_bool}</p>
+        <p><strong>Confidence:</strong> {confidence}</p>
+        <p><strong>Upload directory files:</strong></p>
+        <ul>
+        """ + '\n'.join([f"<li>{f}</li>" for f in os.listdir(upload_dir)]) + """
+        </ul>
+        """
+    else:
+        return f"""
+        <h2>File not found: {filename}</h2>
+        <p><strong>Expected path:</strong> {test_path}</p>
+        <p><strong>Upload directory:</strong> {upload_dir}</p>
+        <p><strong>Upload directory exists:</strong> {os.path.exists(upload_dir)}</p>
+        <p><strong>Files in upload directory:</strong></p>
+        <ul>
+        """ + '\n'.join([f"<li>{f}</li>" for f in os.listdir(upload_dir) if os.path.exists(upload_dir)]) + """
+        </ul>
+        """
 
 @app.errorhandler(404)
 def page_not_found(e):
